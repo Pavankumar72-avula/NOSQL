@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Admin Dashboard | Engineering Digital Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-icon">📚</span>
+        <span>Engineering Digital Library</span>
+    </a>
+
+    <div class="nav-links">
+        <a class="nav-link" href="{{ url_for('home') }}">Catalogue</a>
+        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a class="nav-link active" href="{{ url_for('admin_dashboard') }}">Admin Panel</a>
+
+        <div class="user-badge">
+            <span>👤 {{ session.get('name', 'Admin') }}</span>
+            <span class="role-pill role-admin">Admin</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('logout') }}" style="display: inline; margin: 0;">
+            <button class="btn btn-sm btn-outline-nav" type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main class="container">
+
+    <!-- Flash Messages -->
+    {% for message in get_flashed_messages() %}
+        <div class="alert">
+            <span>ℹ️</span>
+            <div>{{ message }}</div>
+        </div>
+    {% endfor %}
+
+    <!-- Admin Hero Header -->
+    <div class="admin-hero">
+        <div>
+            <div class="hero-pill" style="margin-bottom: 10px;">⚙️ ADMINISTRATOR PANEL</div>
+            <h1 style="color:#fff; font-size: clamp(22px,3vw,32px); margin-bottom: 6px;">Library Control Centre</h1>
+            <p style="color:#cbd5e1; margin:0;">Full oversight of books, users, and borrowing activity.</p>
+        </div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a class="btn btn-primary" href="{{ url_for('home') }}#add-book-form">➕ Add Book</a>
+            <a class="btn btn-outline-nav" href="{{ url_for('home') }}">📚 View Catalogue</a>
+        </div>
+    </div>
+
+    <!-- ===== STATS GRID ===== -->
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card admin-stat-blue">
+            <div class="admin-stat-icon">📚</div>
+            <div>
+                <div class="admin-stat-number">{{ total_books }}</div>
+                <div class="admin-stat-label">Total Books</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card admin-stat-green">
+            <div class="admin-stat-icon">👥</div>
+            <div>
+                <div class="admin-stat-number">{{ total_users }}</div>
+                <div class="admin-stat-label">Registered Users</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card admin-stat-amber">
+            <div class="admin-stat-icon">📤</div>
+            <div>
+                <div class="admin-stat-number">{{ active_loans }}</div>
+                <div class="admin-stat-label">Active Loans</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card admin-stat-teal">
+            <div class="admin-stat-icon">✅</div>
+            <div>
+                <div class="admin-stat-number">{{ available_books }}</div>
+                <div class="admin-stat-label">Available Books</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card admin-stat-purple">
+            <div class="admin-stat-icon">📦</div>
+            <div>
+                <div class="admin-stat-number">{{ returned_loans }}</div>
+                <div class="admin-stat-label">Total Returns</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card admin-stat-slate">
+            <div class="admin-stat-icon">🗂️</div>
+            <div>
+                <div class="admin-stat-number">{{ category_counts|length }}</div>
+                <div class="admin-stat-label">Categories</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TWO COLUMN LAYOUT ===== -->
+    <div class="admin-layout">
+
+        <!-- ===== BORROWING RECORDS ===== -->
+        <section class="admin-panel">
+            <div class="admin-panel-header">
+                <h2 class="admin-panel-title"><span>📋</span> Borrowing Records</h2>
+                <span class="admin-panel-badge">{{ all_loans|length }} records</span>
+            </div>
+
+            {% if all_loans %}
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Book Title</th>
+                                <th>Student</th>
+                                <th>Borrowed On</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in all_loans %}
+                                <tr>
+                                    <td class="admin-td-bold">{{ loan.get('book_title', 'Unknown') }}</td>
+                                    <td class="admin-td-muted">{{ loan.get('user_id', '—') }}</td>
+                                    <td class="admin-td-muted">
+                                        {{ loan.borrowed_at.strftime('%d %b %Y') if loan.borrowed_at and loan.borrowed_at.strftime else '—' }}
+                                    </td>
+                                    <td class="admin-td-muted">
+                                        {{ loan.due_date.strftime('%d %b %Y') if loan.due_date and loan.due_date.strftime else '—' }}
+                                    </td>
+                                    <td>
+                                        {% if loan.get('status') == 'borrowed' %}
+                                            <span class="loan-badge loan-badge-normal">● Active</span>
+                                        {% else %}
+                                            <span class="loan-badge" style="background:#f1f5f9; color:#64748b;">✓ Returned</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state" style="padding: 30px 20px;">
+                    <div class="empty-state-icon">📋</div>
+                    <h3>No Borrowing Records</h3>
+                    <p>No loans have been recorded yet.</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <!-- ===== RIGHT COLUMN ===== -->
+        <div class="admin-right-col">
+
+            <!-- User Management -->
+            <section class="admin-panel" style="margin-bottom: 28px;">
+                <div class="admin-panel-header">
+                    <h2 class="admin-panel-title"><span>👥</span> User Management</h2>
+                    <span class="admin-panel-badge">{{ all_users|length }} users</span>
+                </div>
+
+                {% if all_users %}
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Active Loans</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in all_users %}
+                                    <tr>
+                                        <td class="admin-td-bold">{{ user.get('name', '—') }}</td>
+                                        <td class="admin-td-muted" style="font-size:12px;">{{ user.get('email', '—') }}</td>
+                                        <td>
+                                            {% if user.get('role') == 'admin' %}
+                                                <span class="role-pill role-admin">Admin</span>
+                                            {% else %}
+                                                <span class="role-pill role-student">Student</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align:center; font-weight:700;">
+                                            {{ user.get('active_loans', 0) }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">No users found.</p>
+                {% endif %}
+            </section>
+
+            <!-- Category Breakdown -->
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2 class="admin-panel-title"><span>🗂️</span> Books by Category</h2>
+                    <span class="admin-panel-badge">{{ category_counts|length }} categories</span>
+                </div>
+
+                {% if category_counts %}
+                    <div class="category-breakdown">
+                        {% for cat, count in category_counts.items() %}
+                            {% set pct = ((count / total_books) * 100)|round(1) if total_books > 0 else 0 %}
+                            <div class="cat-row">
+                                <div class="cat-row-top">
+                                    <span class="cat-row-name">{{ cat }}</span>
+                                    <span class="cat-row-count">{{ count }}</span>
+                                </div>
+                                <div class="cat-progress-bar">
+                                    <div class="cat-progress-fill" style="width: {{ pct }}%;"></div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p style="color:var(--text-muted); text-align:center; padding:20px 0;">No categories found.</p>
+                {% endif %}
+            </section>
+
+        </div><!-- end admin-right-col -->
+    </div><!-- end admin-layout -->
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <p style="margin: 0;">
+        <strong>Engineering Digital Library</strong> &bull; Admin Panel &bull; Powered by MongoDB &amp; Neo4j
+    </p>
+</footer>
+
+</body>
+</html>
+

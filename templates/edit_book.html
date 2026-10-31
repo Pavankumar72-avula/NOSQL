@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edit Book: {{ book.title }} | Engineering Digital Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-icon">📚</span>
+        <span>Engineering Digital Library</span>
+    </a>
+
+    <div class="nav-links">
+        <a class="nav-link" href="{{ url_for('home') }}">Catalogue</a>
+        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Panel</a>
+
+        <div class="user-badge">
+            <span>👤 {{ session.get('name', 'Admin') }}</span>
+            <span class="role-pill role-admin">Admin</span>
+        </div>
+
+        <form method="POST" action="{{ url_for('logout') }}" style="display: inline; margin: 0;">
+            <button class="btn btn-sm btn-outline-nav" type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main class="container" style="max-width: 820px;">
+
+    <!-- Breadcrumb & Back -->
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('home') }}" class="back-to-top" style="font-size: 14px;">
+            ← Back to Catalogue
+        </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% for message in get_flashed_messages() %}
+        <div class="alert">
+            <span>ℹ️</span>
+            <div>{{ message }}</div>
+        </div>
+    {% endfor %}
+
+    <!-- Card -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border); padding-bottom: 18px;">
+            <div>
+                <h1 style="font-size: 24px; margin: 0 0 4px 0;">Edit Book Details</h1>
+                <p style="margin: 0; color: var(--text-muted); font-size: 14px;">Update volume metadata in the library repository</p>
+            </div>
+            <span class="role-pill role-admin">Administrator Action</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 160px 1fr; gap: 30px; align-items: start;">
+            <!-- Cover Preview -->
+            <div style="text-align: center;">
+                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">
+                    Cover Preview
+                </label>
+
+                <div style="width: 140px; height: 200px; background: #f1f5f9; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto; box-shadow: var(--shadow-sm);">
+                    {% if book.get('image_url') %}
+                        <img
+                            id="cover-preview"
+                            src="{{ book.get('image_url') }}"
+                            alt="Book Cover"
+                            style="width: 100%; height: 100%; object-fit: contain;"
+                            onerror="this.style.display='none'; document.getElementById('cover-fallback').style.display='flex';">
+                        <div id="cover-fallback" style="display: none; font-size: 38px;">📖</div>
+                    {% else %}
+                        <div id="cover-fallback" style="font-size: 38px;">📖</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Form -->
+            <form method="POST">
+                <div class="form-group">
+                    <label for="title">Book Title *</label>
+                    <input
+                        class="form-control"
+                        type="text"
+                        id="title"
+                        name="title"
+                        value="{{ book.title }}"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="author">Author(s) *</label>
+                    <input
+                        class="form-control"
+                        type="text"
+                        id="author"
+                        name="author"
+                        value="{{ book.author }}"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category / Discipline *</label>
+                    <input
+                        class="form-control"
+                        type="text"
+                        id="category"
+                        name="category"
+                        value="{{ book.category }}"
+                        list="cat-options"
+                        required>
+                    <datalist id="cat-options">
+                        <option value="Computer Science and Engineering">
+                        <option value="Artificial Intelligence and Machine Learning">
+                        <option value="Electronics and Communication Engineering">
+                        <option value="Electronics &amp; Electrical Engineering">
+                        <option value="Mechanical Engineering">
+                        <option value="Civil &amp; Structural Engineering">
+                        <option value="Engineering Mathematics">
+                        <option value="Data Science">
+                        <option value="Robotics &amp; Control Engineering">
+                        <option value="Chemical &amp; Materials Engineering">
+                        <option value="Technology">
+                        <option value="Science">
+                        <option value="Mathematics">
+                        <option value="Fiction">
+                        <option value="Science Fiction">
+                        <option value="Fantasy">
+                        <option value="History">
+                        <option value="Philosophy">
+                        <option value="Biography">
+                        <option value="Self-Help">
+                        <option value="Mystery">
+                        <option value="Business">
+                        <option value="Psychology">
+                        <option value="Economics">
+                        <option value="Poetry">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="image_url">Book Cover Image URL</label>
+                    <input
+                        class="form-control"
+                        type="url"
+                        id="image_url"
+                        name="image_url"
+                        value="{{ book.get('image_url', '') }}"
+                        placeholder="https://covers.openlibrary.org/b/isbn/..."
+                        oninput="updatePreview(this.value)">
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        Tip: Use Open Library format — https://covers.openlibrary.org/b/isbn/&lt;ISBN&gt;-L.jpg
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin-top: 25px;">
+                    <button class="btn btn-primary" type="submit">
+                        <span>💾</span> Save Changes
+                    </button>
+                    <a class="btn btn-secondary" href="{{ url_for('home') }}">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    function updatePreview(url) {
+        const img = document.getElementById('cover-preview');
+        const fallback = document.getElementById('cover-fallback');
+        if (url && url.trim().length > 0) {
+            if (!img) {
+                const container = document.querySelector('[style*="width: 140px"]');
+                const newImg = document.createElement('img');
+                newImg.id = 'cover-preview';
+                newImg.style.cssText = 'width:100%;height:100%;object-fit:contain;';
+                newImg.onerror = () => { newImg.style.display='none'; fallback.style.display='flex'; };
+                container.prepend(newImg);
+            } else {
+                img.src = url;
+                img.style.display = 'block';
+            }
+            if (fallback) fallback.style.display = 'none';
+        } else {
+            if (img) img.style.display = 'none';
+            if (fallback) fallback.style.display = 'flex';
+        }
+    }
+</script>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div>
+            <strong>Engineering Digital Library</strong> &bull; Powered by MongoDB Atlas &amp; Neo4j
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>

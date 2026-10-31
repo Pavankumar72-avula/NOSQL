@@ -1,0 +1,30 @@
+﻿{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Seed Database (seed.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/seed.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Seed Database (Skip Sync)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/seed.py",
+            "args": ["--skip-sync"],
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Run Flask App (app.py)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/app.py",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

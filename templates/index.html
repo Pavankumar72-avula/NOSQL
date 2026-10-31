@@ -1,0 +1,980 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title> Digital Library</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        :root {
+            --navy: #17243a;
+            --blue: #245b91;
+            --orange: #ed9136;
+            --background: #f7f8f7;
+            --surface: #ffffff;
+            --soft: #f0efe7;
+            --text: #17243a;
+            --muted: #718096;
+            --border: #e1e6e9;
+            --green: #236348;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+        }
+
+        /* NAVIGATION */
+
+        .navbar {
+            height: 76px;
+            padding: 0 4%;
+            background: var(--navy);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 3px 12px rgba(0,0,0,.10);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            color: white;
+            text-decoration: none;
+            font-size: 23px;
+            font-weight: 700;
+        }
+
+        .brand-mark {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #2879b8, #ed9136);
+            display: grid;
+            place-items: center;
+            font-size: 25px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .nav-links a,
+        .catalogue-toggle {
+            color: #dbe5f1;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .catalogue-toggle {
+            border: none;
+            background: #293b55;
+            border-radius: 9px;
+            padding: 13px 20px;
+            cursor: pointer;
+        }
+
+        .catalogue-toggle:hover,
+        .catalogue-toggle.active {
+            background: #354c6b;
+            color: #ffb45f;
+        }
+
+        .nav-links .logout-button {
+            background: white;
+            color: var(--navy);
+            border: none;
+            border-radius: 9px;
+            padding: 13px 22px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+
+        .nav-links .register-link {
+            background: var(--orange);
+            color: white;
+            padding: 12px 19px;
+            border-radius: 8px;
+        }
+
+        /* MAIN AREA */
+
+        .container {
+            width: 94%;
+            max-width: 1500px;
+            margin: 35px auto;
+        }
+
+        /* SEARCH */
+
+        .search-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 30px;
+        }
+
+        .search-panel {
+            width: min(620px, 100%);
+            display: flex;
+            gap: 10px;
+            padding: 7px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .search-panel input {
+            flex: 1;
+            min-width: 0;
+            padding: 13px;
+            border: none;
+            outline: none;
+            font-size: 15px;
+            background: transparent;
+        }
+
+        .search-panel button {
+            background: var(--blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0 22px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* COLLECTION TOOLBAR */
+
+        .collection-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            gap: 15px;
+        }
+
+        .collection-toolbar p {
+            color: var(--muted);
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .collection-toolbar select {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            color: var(--text);
+        }
+
+        /* BOOK GRID */
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            column-gap: 28px;
+            row-gap: 38px;
+        }
+
+        /* BOOK CARD */
+
+        .catalogue-book-card {
+            min-width: 0;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            transition: transform .2s ease;
+        }
+
+        .catalogue-book-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .book-image-container {
+            height: 360px;
+            width: 100%;
+            padding: 25px;
+            background: var(--soft);
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .book-cover {
+            display: block;
+            max-width: 72%;
+            width: auto;
+            height: 300px;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 10px 20px rgba(0,0,0,.14);
+        }
+
+        .book-cover-placeholder {
+            width: 190px;
+            height: 270px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #e4e4dc;
+            border-radius: 5px;
+            font-size: 60px;
+        }
+
+        /* BOOK INFORMATION */
+
+        .book-details {
+            padding: 16px 0 0;
+        }
+
+        .book-category {
+            display: block;
+            color: var(--blue);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+            margin-bottom: 13px;
+        }
+
+        .book-details h3 {
+            margin: 0 0 10px;
+            font-family: Georgia, serif;
+            font-size: 23px;
+            font-weight: 400;
+            line-height: 1.3;
+        }
+
+        .book-author {
+            color: var(--muted);
+            font-size: 15px;
+            margin: 0 0 20px;
+        }
+
+        /* BOOK FOOTER */
+
+        .book-card-footer {
+            min-height: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border-top: 1px solid transparent;
+        }
+
+        .catalogue-status {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .status-check {
+            color: var(--green);
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .book-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .book-actions form {
+            margin: 0;
+        }
+
+        .book-action-link {
+            background: transparent;
+            border: none;
+            color: var(--green);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 5px;
+        }
+
+        .book-action-link:hover {
+            color: var(--orange);
+        }
+
+        .delete-link {
+            color: #c0392b;
+        }
+
+        /* CATALOGUE POPUP */
+
+        .catalogue-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 200;
+            background: rgba(15, 25, 40, .28);
+            padding: 90px 20px 25px;
+        }
+
+        .catalogue-overlay.show {
+            display: block;
+        }
+
+        .catalogue-popup {
+            max-width: 850px;
+            width: 100%;
+            max-height: 78vh;
+            margin: 0 auto;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: 0 18px 50px rgba(0,0,0,.18);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .catalogue-popup-header {
+            padding: 23px 28px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .catalogue-popup-header h2 {
+            margin: 0;
+            font-family: Georgia, serif;
+            font-size: 24px;
+            font-weight: 400;
+        }
+
+        .catalogue-close {
+            border: none;
+            background: transparent;
+            font-size: 29px;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .subject-list {
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .subject-item {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 15px 20px;
+            margin-bottom: 4px;
+            border: none;
+            border-radius: 6px;
+            background: white;
+            color: #46566c;
+            text-align: left;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .subject-item:hover,
+        .subject-item.active {
+            background: #e1eee5;
+            color: #174d38;
+        }
+
+        .subject-item.active {
+            font-weight: 700;
+        }
+
+        .subject-count {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .subject-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 12px;
+        }
+
+        /* FLASH MESSAGES */
+
+        .alert {
+            padding: 13px 18px;
+            background: #fff3e3;
+            color: #80501d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* EMPTY STATE */
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .empty-state h3 {
+            font-family: Georgia, serif;
+            font-size: 25px;
+        }
+
+        /* ADMIN ADD BOOK */
+
+        .admin-add-book {
+            margin-top: 50px;
+            padding: 25px;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .admin-add-book h2 {
+            font-family: Georgia, serif;
+            font-weight: 400;
+        }
+
+        .admin-add-book input {
+            display: block;
+            width: 100%;
+            max-width: 550px;
+            padding: 12px;
+            margin: 8px 0 18px;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+        }
+
+        .admin-add-book button {
+            background: var(--blue);
+            color: white;
+            border: none;
+            padding: 12px 22px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        /* RESPONSIVE */
+
+        @media (max-width: 950px) {
+            .book-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .book-image-container {
+                height: 320px;
+            }
+
+            .book-cover {
+                height: 265px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .navbar {
+                height: auto;
+                min-height: 70px;
+                padding: 12px 4%;
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+
+            .brand {
+                font-size: 17px;
+            }
+
+            .brand-mark {
+                width: 38px;
+                height: 38px;
+            }
+
+            .nav-links {
+                gap: 10px;
+            }
+
+            .nav-links a,
+            .catalogue-toggle {
+                font-size: 13px;
+            }
+
+            .container {
+                width: 92%;
+                margin: 22px auto;
+            }
+
+            .book-grid {
+                grid-template-columns: 1fr;
+                row-gap: 30px;
+            }
+
+            .book-image-container {
+                height: 350px;
+            }
+
+            .book-cover {
+                height: 290px;
+            }
+
+            .subject-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .catalogue-overlay {
+                padding: 80px 10px 15px;
+            }
+
+            .collection-toolbar {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .search-panel button {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+
+<nav class="navbar">
+
+    <a class="brand" href="{{ url_for('home') }}">
+    <span class="brand-mark">📚</span>
+
+    <span class="brand-text">
+        <strong>Library Management</strong>
+    
+    </span>
+</a>
+
+    <div class="nav-links">
+
+        <button type="button"
+                id="catalogueToggle"
+                class="catalogue-toggle"
+                aria-expanded="false">
+            Catalogue <span id="catalogueArrow">⌄</span>
+        </button>
+
+        {% if session.get('user_id') %}
+
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+
+            <form method="POST"
+                  action="{{ url_for('logout') }}"
+                  style="display:inline;">
+
+                <button class="logout-button" type="submit">
+                    Logout
+                </button>
+
+            </form>
+
+        {% else %}
+
+            <a href="{{ url_for('login') }}">Login</a>
+
+            <a class="register-link"
+               href="{{ url_for('register') }}">
+                Register
+            </a>
+
+        {% endif %}
+
+    </div>
+</nav>
+
+
+<main class="container">
+
+    <!-- SEARCH -->
+
+    <section class="search-section">
+
+        <form class="search-panel"
+              method="GET"
+              action="{{ url_for('home') }}">
+
+            <input type="search"
+                   name="search"
+                   value="{{ search }}"
+                   placeholder="Search by title, author, or category..."
+                   aria-label="Search books">
+
+            <button type="submit">Search</button>
+
+        </form>
+
+    </section>
+
+
+    <!-- FLASH MESSAGES -->
+
+    {% for message in get_flashed_messages() %}
+        <div class="alert">{{ message }}</div>
+    {% endfor %}
+
+
+    <!-- ================= CATALOGUE POPUP ================= -->
+
+    <div class="catalogue-overlay" id="catalogueOverlay">
+
+        <div class="catalogue-popup">
+
+            <div class="catalogue-popup-header">
+
+                <h2>Browse by subject</h2>
+
+                <button type="button"
+                        class="catalogue-close"
+                        id="closeCatalogue"
+                        aria-label="Close">
+                    &times;
+                </button>
+
+            </div>
+
+            <div class="subject-list">
+
+                <a class="subject-item {% if not selected_category %}active{% endif %}"
+                   href="{{ url_for('home', search=search) }}">
+
+                    <span>All subjects</span>
+                    <span class="subject-count">All books</span>
+
+                </a>
+
+                <div class="subject-grid">
+
+                    {% for category in all_categories %}
+
+                        <a class="subject-item {% if selected_category == category %}active{% endif %}"
+                           href="{{ url_for('home', category=category, search=search) }}">
+
+                            <span>{{ category }}</span>
+
+                        </a>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- ================= BOOK COLLECTION ================= -->
+
+    <section id="bookCollection">
+
+        <div class="library-intro">
+        <h1>Discover Your Next Read</h1>
+        <p>
+            Explore our collection, find your favourite books,
+            and make every reading moment meaningful.
+        </p>
+    </div>
+
+        <div class="collection-toolbar">
+
+            <p>
+                {% if selected_category %}
+                    {{ selected_category }}
+                {% elif search %}
+                    Search results for "{{ search }}"
+                {% else %}
+                    {{ books|length }} books in your library
+                {% endif %}
+            </p>
+
+            <div>
+
+                {% if selected_category or search %}
+
+                    <a href="{{ url_for('home') }}"
+                       style="color:#245b91;text-decoration:none;">
+                        Clear filters
+                    </a>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        {% if books %}
+
+            <div class="book-grid">
+
+                {% for book in books %}
+
+                    <article class="catalogue-book-card">
+
+                        <!-- BOOK IMAGE -->
+
+                        <div class="book-image-container">
+
+                            {% if book.get('image_url') %}
+
+                                <img
+                                    src="{{ book.get('image_url') }}"
+                                    alt="{{ book.title }} cover"
+                                    class="book-cover"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                                <div class="book-cover-placeholder"
+                                     style="display:none;">
+                                    📚
+                                </div>
+
+                            {% else %}
+
+                                <div class="book-cover-placeholder">
+                                    📚
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <!-- BOOK DETAILS -->
+
+                        <div class="book-details">
+
+                            <span class="book-category">
+                                {{ book.get('category', 'Other') }}
+                            </span>
+
+                            <h3>{{ book.title }}</h3>
+
+                            <p class="book-author">
+                                {{ book.author }}
+                            </p>
+
+
+                            <!-- ACTIONS -->
+
+                            <div class="book-card-footer">
+
+                                <span class="catalogue-status">
+                                    <span class="status-check">✓</span>
+                                    In catalogue
+                                </span>
+
+                                <div class="book-actions">
+
+                                    {% if session.get('role') == 'admin' %}
+
+                                        <a class="book-action-link"
+                                           href="{{ url_for('edit_book', book_id=book._id) }}">
+                                            Edit
+                                        </a>
+
+                                        <form method="POST"
+                                              action="{{ url_for('delete_book', book_id=book._id) }}"
+                                              onsubmit="return confirm('Delete this book?')">
+
+                                            <button type="submit"
+                                                    class="book-action-link delete-link">
+                                                Delete
+                                            </button>
+
+                                        </form>
+
+                                    {% elif session.get('role') == 'student' %}
+
+                                        <form method="POST"
+                                              action="{{ url_for('borrow_book', book_id=book._id) }}">
+
+                                            <button type="submit"
+                                                    class="book-action-link">
+                                                Borrow →
+                                            </button>
+
+                                        </form>
+
+                                    {% elif session.get('user_id') %}
+
+                                        <span class="book-action-link">
+                                            Unavailable
+                                        </span>
+
+                                    {% else %}
+
+                                        <a class="book-action-link"
+                                           href="{{ url_for('login') }}">
+                                            Login to borrow →
+                                        </a>
+
+                                    {% endif %}
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty-state">
+
+                <div style="font-size:45px;">📚</div>
+
+                <h3>No books found</h3>
+
+                <p>Try another search or select a different subject.</p>
+
+                <a href="{{ url_for('home') }}">
+                    View all books
+                </a>
+
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- ================= ADMIN ADD BOOK ================= -->
+
+    {% if session.get('role') == 'admin' %}
+
+        <section class="admin-add-book" id="add-book-form">
+
+            <h2>Add a New Book</h2>
+
+            <form method="POST"
+                  action="{{ url_for('add_book') }}">
+
+                <label for="title">Book Title</label>
+                <input type="text"
+                       id="title"
+                       name="title"
+                       placeholder="Enter book title"
+                       required>
+
+                <label for="author">Author</label>
+                <input type="text"
+                       id="author"
+                       name="author"
+                       placeholder="Enter author name"
+                       required>
+
+                <label for="category">Category</label>
+                <input type="text"
+                       id="category"
+                       name="category"
+                       placeholder="Enter category"
+                       required>
+
+                <label for="image_url">Book Cover Image URL</label>
+                <input type="url"
+                       id="image_url"
+                       name="image_url"
+                       placeholder="Paste image URL">
+
+                <button type="submit">Save Book</button>
+
+            </form>
+
+        </section>
+
+    {% endif %}
+
+</main>
+
+
+<!-- ================= JAVASCRIPT ================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const toggle = document.getElementById("catalogueToggle");
+    const overlay = document.getElementById("catalogueOverlay");
+    const closeButton = document.getElementById("closeCatalogue");
+    const arrow = document.getElementById("catalogueArrow");
+
+    function openCatalogue() {
+        overlay.classList.add("show");
+        toggle.classList.add("active");
+        toggle.setAttribute("aria-expanded", "true");
+        arrow.textContent = "⌃";
+    }
+
+    function closeCatalogue() {
+        overlay.classList.remove("show");
+        toggle.classList.remove("active");
+        toggle.setAttribute("aria-expanded", "false");
+        arrow.textContent = "⌄";
+    }
+
+    toggle.addEventListener("click", function () {
+
+        if (overlay.classList.contains("show")) {
+            closeCatalogue();
+        } else {
+            openCatalogue();
+        }
+
+    });
+
+    closeButton.addEventListener("click", closeCatalogue);
+
+    overlay.addEventListener("click", function (event) {
+        if (event.target === overlay) {
+            closeCatalogue();
+        }
+    });
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+            closeCatalogue();
+        }
+    });
+
+});
+
+</script>
+
+</body>
+</html>

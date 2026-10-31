@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Account |  Digital Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-icon">📚</span>
+        <span>Digital Library</span>
+    </a>
+
+    <div class="nav-links">
+        <a class="nav-link" href="{{ url_for('home') }}">Catalogue</a>
+        <a class="btn btn-sm btn-outline-nav" href="{{ url_for('login') }}">Sign In</a>
+    </div>
+</nav>
+
+<!-- ================= AUTH LAYOUT ================= -->
+<div class="auth-wrapper">
+    <div class="auth-container">
+        <!-- Sidebar Branding -->
+        <div class="auth-sidebar">
+            <div class="auth-sidebar-header">
+                <span class="hero-pill" style="margin-bottom: 16px;">🎓 STUDENT ENROLMENT</span>
+                <h2>Join the Digital Library</h2>
+                <p>Register a student membership to borrow textbooks, research references, and engineering standards.</p>
+
+                <ul class="auth-features">
+                    <li>
+                        <span>✓</span> Access to 200+ engineering &amp; technology volumes
+                    </li>
+                    <li>
+                        <span>✓</span> Borrow books with automatic 14-day loan periods
+                    </li>
+                    <li>
+                        <span>✓</span> Personalised recommendations via Neo4j Graph Database
+                    </li>
+                    <li>
+                        <span>✓</span> 100% free educational library access
+                    </li>
+                </ul>
+            </div>
+
+            <div style="font-size: 13px; color: #94a3b8; position: relative; z-index: 1;">
+                &copy; Engineering Digital Library &bull; MongoDB Atlas &amp; Neo4j
+            </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="auth-content">
+            <div class="auth-header">
+                <h1>Create Account</h1>
+                <p>Fill in your details to get started with borrowing</p>
+            </div>
+
+            <!-- Flash Messages -->
+            {% for message in get_flashed_messages() %}
+                <div class="alert alert-error">
+                    <span>⚠️</span>
+                    <div>{{ message }}</div>
+                </div>
+            {% endfor %}
+
+            <form method="POST" action="{{ url_for('register') }}" novalidate>
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input
+                        class="form-control"
+                        type="text"
+                        id="name"
+                        name="name"
+                        placeholder="e.g. Arjun Sharma"
+                        autocomplete="name"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input
+                        class="form-control"
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="you@university.edu"
+                        autocomplete="email"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password <span style="color:var(--text-muted); font-weight:400;">(minimum 8 characters)</span></label>
+                    <div class="password-input-group">
+                        <input
+                            class="form-control"
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="At least 8 characters"
+                            minlength="8"
+                            autocomplete="new-password"
+                            oninput="checkPasswordStrength(this.value)"
+                            required>
+                        <button
+                            class="toggle-password"
+                            type="button"
+                            aria-label="Toggle password visibility"
+                            onclick="togglePasswordVisibility('password', this)">
+                            👁️
+                        </button>
+                    </div>
+                    <div id="pwd-strength" class="pwd-strength-bar" style="display:none;">
+                        <div id="pwd-strength-fill"></div>
+                    </div>
+                    <div id="pwd-strength-text" style="font-size:12px; margin-top:4px; color:var(--text-muted);"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <div class="password-input-group">
+                        <input
+                            class="form-control"
+                            type="password"
+                            id="confirm_password"
+                            name="confirm_password"
+                            placeholder="Re-enter your password"
+                            minlength="8"
+                            autocomplete="new-password"
+                            required>
+                        <button
+                            class="toggle-password"
+                            type="button"
+                            aria-label="Toggle password visibility"
+                            onclick="togglePasswordVisibility('confirm_password', this)">
+                            👁️
+                        </button>
+                    </div>
+                    <div id="pwd-match" style="font-size:12px; margin-top:4px;"></div>
+                </div>
+
+                <button class="btn btn-primary btn-full btn-lg" type="submit" style="margin-top: 10px;">
+                    <span>🎓</span> Register Account
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                Already registered?
+                <a href="{{ url_for('login') }}" style="font-weight: 700;">Sign In Here</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePasswordVisibility(fieldId, btn) {
+        const input = document.getElementById(fieldId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            btn.textContent = '🔒';
+        } else {
+            input.type = 'password';
+            btn.textContent = '👁️';
+        }
+    }
+
+    function checkPasswordStrength(val) {
+        const bar = document.getElementById('pwd-strength');
+        const fill = document.getElementById('pwd-strength-fill');
+        const text = document.getElementById('pwd-strength-text');
+        if (!val) { bar.style.display = 'none'; text.textContent = ''; return; }
+        bar.style.display = 'block';
+        let score = 0;
+        if (val.length >= 8) score++;
+        if (val.length >= 12) score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+        const levels = [
+            { label: 'Very Weak', color: '#ef4444', w: '20%' },
+            { label: 'Weak',      color: '#f97316', w: '40%' },
+            { label: 'Fair',      color: '#eab308', w: '60%' },
+            { label: 'Strong',    color: '#22c55e', w: '80%' },
+            { label: 'Very Strong', color: '#0f766e', w: '100%' },
+        ];
+        const lvl = levels[Math.min(score - 1, 4)] || levels[0];
+        fill.style.width = lvl.w;
+        fill.style.background = lvl.color;
+        text.textContent = 'Password strength: ' + lvl.label;
+        text.style.color = lvl.color;
+    }
+
+    // Live confirm-password match
+    document.getElementById('confirm_password').addEventListener('input', function() {
+        const pwd = document.getElementById('password').value;
+        const el  = document.getElementById('pwd-match');
+        if (!this.value) { el.textContent = ''; return; }
+        if (this.value === pwd) {
+            el.textContent = '✓ Passwords match';
+            el.style.color = '#10b981';
+        } else {
+            el.textContent = '✗ Passwords do not match';
+            el.style.color = '#ef4444';
+        }
+    });
+</script>
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+
+</body>
+</html>

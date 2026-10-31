@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Dashboard | Engineering Digital Library</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<nav class="navbar">
+    <a class="brand" href="{{ url_for('home') }}">
+        <span class="brand-icon">📚</span>
+        <span>Engineering Digital Library</span>
+    </a>
+
+    <div class="nav-links">
+        <a class="nav-link" href="{{ url_for('home') }}">Catalogue</a>
+        <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
+
+        {% if session.get('role') == 'admin' %}
+            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">Admin Panel</a>
+        {% endif %}
+
+        <div class="user-badge">
+            <span>👤 {{ session.get('name', 'Student') }}</span>
+            {% if session.get('role') == 'admin' %}
+                <span class="role-pill role-admin">Admin</span>
+            {% else %}
+                <span class="role-pill role-student">Student</span>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="{{ url_for('logout') }}" style="display: inline; margin: 0;">
+            <button class="btn btn-sm btn-outline-nav" type="submit">Logout</button>
+        </form>
+    </div>
+</nav>
+
+<!-- ================= MAIN CONTENT ================= -->
+<main class="container">
+
+    <!-- Flash Messages -->
+    {% for message in get_flashed_messages() %}
+        <div class="alert">
+            <span>ℹ️</span>
+            <div>{{ message }}</div>
+        </div>
+    {% endfor %}
+
+    <!-- Welcome Hero -->
+    <div class="dashboard-welcome">
+        <div>
+            <h1>Welcome back, {{ session.get('name', 'Reader') }}! 👋</h1>
+            <p>Manage your borrowed books and discover graph-powered reading recommendations.</p>
+        </div>
+
+        <a class="btn btn-primary" href="{{ url_for('home') }}">
+            <span>🔍</span> Browse Catalogue
+        </a>
+    </div>
+
+    <!-- ===== STUDENT PROFILE CARD ===== -->
+    <div class="profile-card">
+        <div class="profile-avatar">
+            {{ session.get('name', 'U')[0].upper() }}
+        </div>
+        <div class="profile-info">
+            <h3 class="profile-name">{{ session.get('name', 'Student') }}</h3>
+            <p class="profile-role">
+                {% if session.get('role') == 'admin' %}
+                    <span class="role-pill role-admin">Administrator</span>
+                {% else %}
+                    <span class="role-pill role-student">Student Member</span>
+                {% endif %}
+            </p>
+            <p class="profile-meta">Library Member &bull; Active Account</p>
+        </div>
+        <div class="profile-stats">
+            <div class="profile-stat">
+                <span class="profile-stat-val">{{ borrowed_books|length }}</span>
+                <span class="profile-stat-label">Active Loans</span>
+            </div>
+            <div class="profile-stat">
+                <span class="profile-stat-val">{{ recommendations|length }}</span>
+                <span class="profile-stat-label">Recommended</span>
+            </div>
+            <div class="profile-stat">
+                <span class="profile-stat-val">14</span>
+                <span class="profile-stat-label">Days Loan Period</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon-wrapper">📖</div>
+            <div class="stat-info">
+                <p>Currently Borrowed</p>
+                <h2>{{ borrowed_books|length }} {{ 'Book' if borrowed_books|length == 1 else 'Books' }}</h2>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #fef3c7; color: #b45309;">✨</div>
+            <div class="stat-info">
+                <p>Graph Recommendations</p>
+                <h2>{{ recommendations|length }} Available</h2>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon-wrapper" style="background: #ecfdf5; color: #047857;">🛡️</div>
+            <div class="stat-info">
+                <p>Library Status</p>
+                <h2 style="font-size: 18px; color: var(--success); margin-top: 8px;">Active &amp; Good Standing</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= CURRENT BORROWINGS ================= -->
+    <section style="margin-bottom: 50px;">
+        <div class="category-section-header">
+            <div class="category-title-group">
+                <h2 class="category-section-title">
+                    <span>📚</span> Currently Borrowed Books
+                </h2>
+                <span class="category-section-badge">{{ borrowed_books|length }} Active</span>
+            </div>
+        </div>
+
+        {% if borrowed_books %}
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                {% for loan in borrowed_books %}
+                    <div class="loan-card">
+                        <!-- Book Cover Thumbnail -->
+                        <div style="flex: 0 0 70px;">
+                            {% if loan.get('image_url') %}
+                                <img
+                                    src="{{ loan.get('image_url') }}"
+                                    alt="{{ loan.title }} cover"
+                                    class="loan-cover-thumb"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="loan-cover-thumb" style="display: none; align-items: center; justify-content: center; font-size: 24px;">
+                                    📖
+                                </div>
+                            {% else %}
+                                <div class="loan-cover-thumb" style="display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                                    📖
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Loan Info -->
+                        <div class="loan-info">
+                            <h3 style="margin: 0 0 4px 0; font-size: 17px; font-weight: 700;">
+                                {{ loan.title }}
+                            </h3>
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-muted);">
+                                <span>✍️</span> {{ loan.author }}
+                            </p>
+
+                            <div style="display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted);">
+                                <span>📅 <strong>Borrowed:</strong> {{ loan.borrowed_at.strftime('%d %b %Y') if loan.borrowed_at and loan.borrowed_at.strftime else 'Recently' }}</span>
+                                <span>⏰ <strong>Due:</strong> {{ loan.due_date.strftime('%d %b %Y') if loan.due_date and loan.due_date.strftime else 'In 14 days' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Badge & Return Action -->
+                        <div style="display: flex; align-items: center; gap: 16px; flex-shrink: 0;">
+                            <span class="loan-badge loan-badge-normal">
+                                <span>✓</span> In Circulation
+                            </span>
+
+                            <form method="POST" action="{{ url_for('return_book', loan_id=loan._id) }}" style="margin: 0;">
+                                <button class="btn btn-outline" type="submit">
+                                    <span>📤</span> Return Book
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📖</div>
+                <h3>No Books Currently Borrowed</h3>
+                <p>You have no active loans right now. Browse our library catalogue to borrow a volume!</p>
+                <a class="btn btn-primary" href="{{ url_for('home') }}">Explore Catalogue</a>
+            </div>
+        {% endif %}
+    </section>
+
+    <!-- ================= RECOMMENDATIONS (NEO4J GRAPH) ================= -->
+    <section style="margin-bottom: 50px;">
+        <div class="category-section-header">
+            <div class="category-title-group">
+                <h2 class="category-section-title">
+                    <span>✨</span> Recommended For You
+                </h2>
+                <span class="category-section-badge" style="background: #fef3c7; color: #92400e;">Neo4j Graph Powered</span>
+            </div>
+        </div>
+
+        {% if recommendations %}
+            <div class="book-grid">
+                {% for book in recommendations %}
+                    <article class="book-card">
+                        <div class="book-cover-area">
+                            {% if book.get('image_url') %}
+                                <img
+                                    src="{{ book.get('image_url') }}"
+                                    alt="{{ book.title }} cover"
+                                    class="book-cover-img"
+                                    loading="lazy"
+                                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+
+                                <div class="book-cover-fallback" style="display: none;">
+                                    <div class="fallback-icon">📖</div>
+                                    <div class="fallback-title">{{ book.title }}</div>
+                                </div>
+                            {% else %}
+                                <div class="book-cover-fallback">
+                                    <div class="fallback-icon">📖</div>
+                                    <div class="fallback-title">{{ book.title }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="book-body">
+                            <span class="book-category-tag">{{ book.category }}</span>
+
+                            <h3 class="book-title" title="{{ book.title }}">
+                                {{ book.title }}
+                            </h3>
+
+                            <div class="book-author">
+                                <span>✍️</span> {{ book.author }}
+                            </div>
+
+                            <div class="book-card-actions">
+                                <form method="POST" action="{{ url_for('borrow_book', book_id=book.book_id) }}" style="width: 100%; margin: 0;">
+                                    <button class="btn btn-sm btn-primary btn-full" type="submit">
+                                        <span>📥</span> Borrow Book
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="card" style="text-align: center; padding: 40px 20px; background: #fafaf9;">
+                <div style="font-size: 42px; margin-bottom: 12px;">💡</div>
+                <h3 style="margin-bottom: 8px;">Discover Tailored Graph Recommendations</h3>
+                <p style="color: var(--text-muted); max-width: 550px; margin: 0 auto 20px auto;">
+                    As you borrow books from categories like Electronics, Computer Engineering, or AI, our Neo4j graph engine will dynamically discover and suggest matching volumes based on your reading patterns.
+                </p>
+                <a class="btn btn-primary" href="{{ url_for('home') }}">Start Exploring Books</a>
+            </div>
+        {% endif %}
+    </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <div class="footer-inner">
+        <div>
+            <strong>Engineering Digital Library</strong> &bull; Powered by MongoDB Atlas &amp; Neo4j Graph Engine
+        </div>
+        <div class="footer-links">
+            <a href="{{ url_for('home') }}">Catalogue</a>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
